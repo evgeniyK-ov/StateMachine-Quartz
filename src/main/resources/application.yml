@@ -1,0 +1,74 @@
+server:
+  servlet:
+    context-path: /statemachine
+
+spring:
+  application:
+    name: StateMachine-Quartz
+  mvc:
+    format:
+      date-time: iso
+  jackson:
+    date-format: "yyyy-MM-dd HH:mm:ss"
+    serialization:
+      write_date_timestamps_as_nanoseconds: false
+      write_dates_as_timestamps: false
+      fail_on_empty_beans: false
+    deserialization:
+      fail_on_unknown_properties: false
+    default-property-inclusion: non_null
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+#        default_schema: statemachine
+#        temp:
+#          use_jdbc_metadata_defaults: false
+#        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=statemachine
+    username: postgres
+    password: postgres
+    driverClassName: org.postgresql.Driver
+    sqlScriptEncoding: UTF-8
+    hikari:
+      leak-detection-threshold: 2000
+      maximum-pool-size: 10
+  servlet:
+    multipart:
+      max-file-size: -1
+      max-request-size: -1
+      file-size-threshold: 50MB
+  flyway:
+#    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=stateMachine
+    user: postgres
+    password: postgres
+    schemas: statemachine
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: never
+      schema: statemachine
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceId: AUTO #Default hostname and timestamp generate instance ID, which can be any string, but must be the only corresponding qrtz_scheduler_state INSTANCE_NAME field for all dispatchers
+            #instanceName: clusteredScheduler #quartzScheduler
+          jobStore:
+            class: org.quartz.impl.jdbcjobstore.JobStoreCMT #Persistence Configuration
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate #We only make database-specific proxies for databases
+            useProperties: true #Indicates that JDBC JobStore stores all values in JobDataMaps as strings, so more complex objects can be stored as name-value pairs rather than serialized in BLOB columns.In the long run, this is safer because you avoid serializing non-String classes to BLOB class versions.
+            tablePrefix: qrtz_  #Database Table Prefix
+            misfireThreshold: 60000 #The number of milliseconds the dispatcher will "tolerate" a Trigger to pass its next startup time before being considered a "fire".The default value (if you do not enter this property in the configuration) is 60000 (60 seconds).
+            clusterCheckinInterval: 5000 #Set the frequency (in milliseconds) of this instance'checkin'* with other instances of the cluster.Affects the speed of detecting failed instances.
+            isClustered: true #Turn on Clustering
+          threadPool: #Connection Pool
+            class: org.quartz.simpl.SimpleThreadPool
+            threadCount: 2
+            threadPriority: 5
+            threadsInheritContextClassLoaderOfInitializingThread: true
+

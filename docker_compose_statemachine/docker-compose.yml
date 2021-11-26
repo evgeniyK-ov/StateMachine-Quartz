@@ -1,0 +1,37 @@
+version: '3'
+networks:
+  stateMachine.net:
+    name: stateMachine_network
+
+services:
+  stateMachine-db:
+    container_name: stateMachine.db
+    image: postgres:11.11
+    restart: always
+    volumes:
+      - .:/var/lib/postgresql/
+      - ./create_schema.sql:/docker-entrypoint-initdb.d/create_schema.sql
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+    - "5432:5432"
+    networks:
+      - stateMachine.net
+
+  pgadmin:
+    container_name: stateMachine.pgadmin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "test@test.ru"
+      PGADMIN_DEFAULT_PASSWORD: "test123"
+    ports:
+      - "16543:80"
+    depends_on:
+      - stateMachine-db
+    networks:
+      - stateMachine.net
+
+
+
