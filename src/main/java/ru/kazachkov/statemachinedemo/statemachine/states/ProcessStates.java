@@ -13,5 +13,6 @@ public enum ProcessStates {
     REPEATINGWAITINGRESULT,
     CANCEL,
     ERROR,
-    SUCCESS
+    SUCCESS,
+    UNDEFINED
 }

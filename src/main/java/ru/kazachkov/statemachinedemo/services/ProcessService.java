@@ -1,9 +1,11 @@
 package ru.kazachkov.statemachinedemo.services;
 
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.service.StateMachineService;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import ru.kazachkov.statemachinedemo.models.entities.ProcessTask;
 import ru.kazachkov.statemachinedemo.models.repository.ProcessTaskRepository;
 import ru.kazachkov.statemachinedemo.schedules.SchedulerService;
@@ -12,18 +14,24 @@ import ru.kazachkov.statemachinedemo.statemachine.states.ProcessStates;
 import ru.kazachkov.statemachinedemo.statemachine.variables.ProcessTypes;
 import ru.kazachkov.statemachinedemo.statemachine.variables.Variable;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
+@Data
 public class ProcessService {
     private final StateMachineService<ProcessStates, ProcessEvent> stateMachineService;
     private final SchedulerService schedulerService;
     private final ProcessTaskRepository processTaskRepository;
 
+
+    public static final Map<UUID, SseEmitter> publishes = new ConcurrentHashMap<>();
+    public static final ThreadLocal<UUID> machineThreadId = new ThreadLocal<>();
 
     public UUID createMessageProcess(String processName, UUID parentId) {
         var machineId = UUID.randomUUID();
@@ -51,7 +59,7 @@ public class ProcessService {
     public void nextStepMessageProcess(UUID machineId) {
         var machine = stateMachineService.acquireStateMachine(machineId.toString(), true);
         var processName = (String) machine.getExtendedState().getVariables().get(Variable.PROCESS_NAME);
-
+        machineThreadId.set(machineId);
         try {
             switch (machine.getState().getId()) {
                 case NEW:
@@ -91,6 +99,7 @@ public class ProcessService {
             }
             processUpdateStatus(machine);
             stateMachineService.releaseStateMachine(machineId.toString(), true);
+            machineThreadId.remove();
         }
 
 

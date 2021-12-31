@@ -1,0 +1,20 @@
+<body>
+<ul id="events"></ul>
+<script type="application/javascript">
+function add(message) {
+const el = document.createElement("li");
+el.innerHTML = message;
+document.getElementById("events").appendChild(el);
+}
+var eventSource = new EventSource("/statemachine/start?message=dsdfsdfsdf");
+eventSource.onmessage = e => {
+add('Temperature: ' + e.data);
+}
+eventSource.onopen = e => add('Connection opened');
+eventSource.onerror = e => add('Connection closed');
+
+
+
+
+</script>
+</body>
